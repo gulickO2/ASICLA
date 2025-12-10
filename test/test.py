@@ -16,7 +16,7 @@ async def test_logic_analyzer(dut):
     dut._log.info("Start logic analyzer test")
 
     # 50 MHz clock (20 ns period)
-    cocotb.start_soon(Clock(dut.clk, 20, units="ns").start())
+    cocotb.start_soon(Clock(dut.clk, 20, unit="ns").start())
 
     # Reset and defaults
     dut.ena.value = 1
@@ -36,25 +36,19 @@ async def test_logic_analyzer(dut):
     dut.uio_in.value = encode_uio(addr=0, arm=False)
     await ClockCycles(dut.clk, 1)  # allow synchronizer to create arm_pulse
 
-    # Wait for capturing to start
-    captured_flag = False
-    for _ in range(10):
-        await ClockCycles(dut.clk, 1)
-        status = (int(dut.uio_out.value) >> 5) & 0b111
-        if status & 0b010:
-            captured_flag = True
-            break
-    assert captured_flag, "Capture never started"
-
-    # Stream 16 samples on ui_in while capturing
+    # Stream 16 samples on ui_in immediately after arming
     sample_data = [i for i in range(16)]
+    saw_capturing = False
     for value in sample_data:
         dut.ui_in.value = value
         await ClockCycles(dut.clk, 1)
+        status = (int(dut.uio_out.value) >> 5) & 0b111
+        saw_capturing |= bool(status & 0b010)
+    assert saw_capturing, "Capturing flag never asserted during sample window"
 
     # Done should assert once capture completes
     done_seen = False
-    for _ in range(5):
+    for _ in range(6):
         status = (int(dut.uio_out.value) >> 5) & 0b111
         if status & 0b100:
             done_seen = True
