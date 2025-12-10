@@ -6,35 +6,51 @@ from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles
 
 
+def encode_uio(addr: int, arm: bool) -> int:
+    """Pack address bits [4:1] and optional arm pulse on bit 0."""
+    return ((addr & 0xF) << 1) | (1 if arm else 0)
+
+
 @cocotb.test()
-async def test_project(dut):
-    dut._log.info("Start")
+async def test_logic_analyzer(dut):
+    dut._log.info("Start logic analyzer test")
 
-    # Set the clock period to 10 us (100 KHz)
-    clock = Clock(dut.clk, 10, unit="us")
-    cocotb.start_soon(clock.start())
+    # 50 MHz clock (20 ns period)
+    cocotb.start_soon(Clock(dut.clk, 20, units="ns").start())
 
-    # Reset
-    dut._log.info("Reset")
+    # Reset and defaults
     dut.ena.value = 1
     dut.ui_in.value = 0
     dut.uio_in.value = 0
     dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
+    await ClockCycles(dut.clk, 5)
     dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 2)
 
-    dut._log.info("Test project behavior")
+    # Status should be idle after reset
+    assert (int(dut.uio_out.value) >> 5) & 0b111 == 0, "Status bits should be low after reset"
 
-    # Set the input values you want to test
-    dut.ui_in.value = 20
-    dut.uio_in.value = 30
-
-    # Wait for one clock cycle to see the output values
+    # Arm the analyzer with a one-cycle pulse on uio_in[0]
+    dut.uio_in.value = encode_uio(addr=0, arm=True)
     await ClockCycles(dut.clk, 1)
+    dut.uio_in.value = encode_uio(addr=0, arm=False)
+    await ClockCycles(dut.clk, 1)  # allow synchronizer to create arm_pulse
 
-    # The following assersion is just an example of how to check the output values.
-    # Change it to match the actual expected output of your module:
-    assert dut.uo_out.value == 50
+    # Stream 16 samples on ui_in
+    sample_data = [i for i in range(16)]
+    for value in sample_data:
+        dut.ui_in.value = value
+        await ClockCycles(dut.clk, 1)
 
-    # Keep testing the module by changing the input values, waiting for
-    # one or more clock cycles, and asserting the expected output values.
+    # Done should assert once capture completes
+    await ClockCycles(dut.clk, 1)
+    status = (int(dut.uio_out.value) >> 5) & 0b111
+    assert status == 0b100, f"Expected status done=1,capturing=0,armed=0, got {bin(status)}"
+
+    # Read back all samples using the address bus on uio_in[4:1]
+    for addr, expected in enumerate(sample_data):
+        dut.uio_in.value = encode_uio(addr=addr, arm=False)
+        await ClockCycles(dut.clk, 1)
+        assert int(dut.uo_out.value) == expected, f"Readback mismatch at addr {addr}: got {int(dut.uo_out.value)}, expected {expected}"
+
+    dut._log.info("Logic analyzer capture/readback OK")
