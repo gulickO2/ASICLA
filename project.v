@@ -70,7 +70,7 @@ module tt_um_asicla (
   assign uio_out = {done, capturing, armed, 5'b0};
   assign uio_oe  = 8'b11100000;  // status on uio_out[7:5], rest inputs
 
-  // List all unused inputs to prevent warnings
+  // List all unused inputs to prevent
   wire _unused = &{ena, uio_in[7:5], 1'b0};
 
 endmodule
