@@ -36,15 +36,31 @@ async def test_logic_analyzer(dut):
     dut.uio_in.value = encode_uio(addr=0, arm=False)
     await ClockCycles(dut.clk, 1)  # allow synchronizer to create arm_pulse
 
-    # Stream 16 samples on ui_in
+    # Wait for capturing to start
+    captured_flag = False
+    for _ in range(10):
+        await ClockCycles(dut.clk, 1)
+        status = (int(dut.uio_out.value) >> 5) & 0b111
+        if status & 0b010:
+            captured_flag = True
+            break
+    assert captured_flag, "Capture never started"
+
+    # Stream 16 samples on ui_in while capturing
     sample_data = [i for i in range(16)]
     for value in sample_data:
         dut.ui_in.value = value
         await ClockCycles(dut.clk, 1)
 
     # Done should assert once capture completes
-    await ClockCycles(dut.clk, 1)
-    status = (int(dut.uio_out.value) >> 5) & 0b111
+    done_seen = False
+    for _ in range(5):
+        status = (int(dut.uio_out.value) >> 5) & 0b111
+        if status & 0b100:
+            done_seen = True
+            break
+        await ClockCycles(dut.clk, 1)
+    assert done_seen, "Done flag did not assert after capture"
     assert status == 0b100, f"Expected status done=1,capturing=0,armed=0, got {bin(status)}"
 
     # Read back all samples using the address bus on uio_in[4:1]
