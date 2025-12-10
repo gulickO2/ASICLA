@@ -1,11 +1,11 @@
 # Tiny Tapeout project information
 project:
-  title:        ""      # Project title
-  author:       ""      # Your name
+  title:        "TinyTapeout Logic Analyzer"      # Project title
+  author:       "Owen Gulick"      # Your name
   discord:      ""      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  ""      # One line description of what your project does
+  description:  "Minimal 16-sample logic analyzer capturing ui_in[7:0] on an arm pulse and exposing samples for random-access readback."      # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
-  clock_hz:     0       # Clock frequency in Hz (or 0 if not applicable)
+  clock_hz:     50000000       # Clock frequency in Hz (or 0 if not applicable)
 
   # How many tiles your design occupies? A single tile is about 167x108 uM.
   tiles: "1x1"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
@@ -23,34 +23,34 @@ project:
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
 pinout:
   # Inputs
-  ui[0]: ""
-  ui[1]: ""
-  ui[2]: ""
-  ui[3]: ""
-  ui[4]: ""
-  ui[5]: ""
-  ui[6]: ""
-  ui[7]: ""
+  ui[0]: "PROBE0"
+  ui[1]: "PROBE1"
+  ui[2]: "PROBE2"
+  ui[3]: "PROBE3"
+  ui[4]: "PROBE4"
+  ui[5]: "PROBE5"
+  ui[6]: "PROBE6"
+  ui[7]: "PROBE7"
 
   # Outputs
-  uo[0]: ""
-  uo[1]: ""
-  uo[2]: ""
-  uo[3]: ""
-  uo[4]: ""
-  uo[5]: ""
-  uo[6]: ""
-  uo[7]: ""
+  uo[0]: "READ_DATA0"
+  uo[1]: "READ_DATA1"
+  uo[2]: "READ_DATA2"
+  uo[3]: "READ_DATA3"
+  uo[4]: "READ_DATA4"
+  uo[5]: "READ_DATA5"
+  uo[6]: "READ_DATA6"
+  uo[7]: "READ_DATA7"
 
   # Bidirectional pins
-  uio[0]: ""
-  uio[1]: ""
-  uio[2]: ""
-  uio[3]: ""
-  uio[4]: ""
-  uio[5]: ""
-  uio[6]: ""
-  uio[7]: ""
+  uio[0]: "ARM_PULSE"
+  uio[1]: "ADDR0"
+  uio[2]: "ADDR1"
+  uio[3]: "ADDR2"
+  uio[4]: "ADDR3"
+  uio[5]: "ARMED_STATUS"
+  uio[6]: "CAPTURING_STATUS"
+  uio[7]: "DONE_STATUS"
 
 # Do not change!
 yaml_version: 6
