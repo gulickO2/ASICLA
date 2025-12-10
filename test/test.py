@@ -34,14 +34,14 @@ async def test_logic_analyzer(dut):
     dut.uio_in.value = encode_uio(addr=0, arm=True)
     await ClockCycles(dut.clk, 1)
     dut.uio_in.value = encode_uio(addr=0, arm=False)
-    await ClockCycles(dut.clk, 1)  # allow synchronizer to create arm_pulse
+    await ClockCycles(dut.clk, 2)  # allow synchronizer + capture enable pipeline
 
-    # Stream 16 samples on ui_in immediately after arming
+    # Stream 16 samples on ui_in while capturing is active
     sample_data = [i for i in range(16)]
     saw_capturing = False
     for value in sample_data:
         dut.ui_in.value = value
-        await ClockCycles(dut.clk, 1)
+        await ClockCycles(dut.clk, 1)  # value sampled on this edge
         status = (int(dut.uio_out.value) >> 5) & 0b111
         saw_capturing |= bool(status & 0b010)
     assert saw_capturing, "Capturing flag never asserted during sample window"
